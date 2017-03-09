@@ -18,10 +18,24 @@
 				tiles[row][col] = row*ROW_COUNT + col;
 			}
 		}
+		// console.log(tiles);
 	}
 
 	function drawPuzzle(){
-		context.drawImage(image, 0, 0);
+		var row, col;
+		var w = 70;
+		var h = 70;
+		var dx, dy;
+		var sx, sy;
+		for(row = 0; row < ROW_COUNT; row++){
+			for(col = 0; col < COL_COUNT; col++){
+				dx = col * w;
+				dy = row * h;
+				sx = (tiles[row][col] % COL_COUNT) * w;
+				sy = Math.floor((tiles[row][col] / COL_COUNT)) * h;
+				context.drawImage(image, sx, sy, w, h, dx, dy, w, h);
+			}
+		}
 	}
 
 	if(!canvas.getContext){
