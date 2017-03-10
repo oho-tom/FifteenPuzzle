@@ -9,6 +9,17 @@
 	var tiles = [];
 	var ROW_COUNT = 4;
 	var COL_COUNT = 4;
+	var PIC_WIDTH = 280;
+	var PIC_HEIGHT = 280;
+	var TILE_WIDTH = PIC_WIDTH / COL_COUNT;
+	var TILE_HEIGHT = PIC_HEIGHT / ROW_COUNT;
+
+	var UDLR = [
+		[0, -1],
+		[0, 1],
+		[-1, 0],
+		[1, 0]
+	];
 
 	function initTiles(){
 		var row, col;
@@ -18,22 +29,30 @@
 				tiles[row][col] = row*ROW_COUNT + col;
 			}
 		}
-		// console.log(tiles);
+		// 右下のマスには空白を示す値を入れる
+		tiles[ROW_COUNT-1][COL_COUNT-1] = -1;
 	}
 
 	function drawPuzzle(){
 		var row, col;
-		var w = 70;
-		var h = 70;
 		var dx, dy;
 		var sx, sy;
 		for(row = 0; row < ROW_COUNT; row++){
 			for(col = 0; col < COL_COUNT; col++){
-				dx = col * w;
-				dy = row * h;
-				sx = (tiles[row][col] % COL_COUNT) * w;
-				sy = Math.floor((tiles[row][col] / COL_COUNT)) * h;
-				context.drawImage(image, sx, sy, w, h, dx, dy, w, h);
+				dx = col * TILE_WIDTH;
+				dy = row * TILE_HEIGHT;
+				sx = (tiles[row][col] % COL_COUNT) * TILE_WIDTH;
+				sy = Math.floor((tiles[row][col] / COL_COUNT)) * TILE_HEIGHT;
+
+				// -1のマスは塗りつぶす
+				if(tiles[row][col] === -1){
+					context.fillStyle = '#eeeeee';
+					context.fillRect(dx, dy , TILE_WIDTH, TILE_HEIGHT);
+				}
+				// それ以外のマスは画像を切り出して描画
+				else {
+					context.drawImage(image, sx, sy, TILE_WIDTH, TILE_HEIGHT, dx, dy, TILE_WIDTH, TILE_HEIGHT);
+				}
 			}
 		}
 	}
@@ -50,4 +69,42 @@
 		initTiles();
 		drawPuzzle();
 	})
+
+	canvas.addEventListener('click', function(e) {
+		var x, y;
+		var rect;
+		rect = e.target.getBoundingClientRect();
+		x = e.clientX - rect.left;
+		y = e.clientY - rect.top;
+		var row, col;
+		row = Math.floor(y / TILE_HEIGHT);
+		col = Math.floor(x / TILE_WIDTH);
+		var i;
+		var targetRow, targetCol;
+
+		// 空のタイルなら何もしない
+		if(tiles[row][col] === -1){
+			return;
+		}
+		// 空以外なら上下左右に空きがあるか調べる
+		for(i = 0; i < UDLR.length; i++){
+			targetRow = row + UDLR[i][1];
+			targetCol = col + UDLR[i][0];
+			// タイルからはみ出したらスキップ
+			if(targetRow < 0 || targetRow >= ROW_COUNT){
+				continue;
+			}
+			if(targetCol < 0 || targetCol >= COL_COUNT){
+				continue;
+			}
+
+			// 空きが見つかった場合、数字を入れ替え、再描画し、ループを終了
+			if(tiles[targetRow][targetCol] === -1){
+				tiles[targetRow][targetCol] = tiles[row][col];
+				tiles[row][col] = -1;
+				drawPuzzle();
+				break;
+			}
+		}
+	});
 })();
