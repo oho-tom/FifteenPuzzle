@@ -21,6 +21,9 @@
 		[1, 0]
 	];
 
+	// シャッフルで動かす回数
+	var moveCount = 2;
+
 	function initTiles(){
 		var row, col;
 		for(row = 0; row < ROW_COUNT; row++){
@@ -57,6 +60,62 @@
 		}
 	}
 
+	// 終了判定
+	function checkResult(){
+		var row, col;
+		for(row = 0; row < ROW_COUNT; row++){
+			for(col = 0; col < COL_COUNT; col++){
+				// 右下のマスまで走査したら終了
+				if(row === ROW_COUNT - 1 && col === COL_COUNT - 1){
+					return true;
+				}
+				// マスの数字が位置に応じた値かチェック
+				if(tiles[row][col] !== COL_COUNT * row + col){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	// シャッフル処理
+	function moveBlank(count){
+		var blankRow, blankCol;
+		var targetRow, targetCol;
+		var targetPosition;
+
+		blankRow = ROW_COUNT - 1;
+		blankCol = COL_COUNT - 1;
+
+		while (true) {
+			targetPosition = Math.floor(Math.random() * UDLR.length);
+			targetRow = blankRow + UDLR[targetPosition][1];
+			targetCol = blankCol + UDLR[targetPosition][0];
+
+			// ターゲットがマスの外なら処理をスキップ
+			if(targetRow < 0 || targetRow >= ROW_COUNT){
+				continue;
+			}
+			if(targetCol < 0 || targetCol >= COL_COUNT){
+				continue;
+			}
+
+			// 値を入れ替え
+			tiles[blankRow][blankCol] = tiles[targetRow][targetCol];
+			tiles[targetRow][targetCol] = -1;
+			blankRow = targetRow;
+			blankCol = targetCol;
+
+			// 再描画
+			drawPuzzle();
+
+			// 規定回数シャッフルしたら終了
+			if(!--count){
+				break;
+			}
+		}
+	}
+
 	if(!canvas.getContext){
 		alert('Canvas not supported ...');
 		return;
@@ -67,6 +126,7 @@
 	image.src = IMAGE_URL;
 	image.addEventListener('load', function(){
 		initTiles();
+		moveBlank(moveCount);
 		drawPuzzle();
 	})
 
@@ -103,6 +163,10 @@
 				tiles[targetRow][targetCol] = tiles[row][col];
 				tiles[row][col] = -1;
 				drawPuzzle();
+				// 終了判定
+				if(checkResult()){
+					alert('Game Clear');
+				}
 				break;
 			}
 		}
